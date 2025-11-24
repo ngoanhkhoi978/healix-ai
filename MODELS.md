@@ -291,17 +291,20 @@ Response:
 ## References
 
 1. **DETR (DEtection TRansformer)**:
-   - End-to-End Object Detection with Transformers
+   - Carion, N., Massa, F., Synnaeve, G., Usunier, N., Kirillov, A., & Zagoruyko, S. (2020). End-to-End Object Detection with Transformers. ECCV 2020.
+   - Paper: https://arxiv.org/abs/2005.12872
    - Eliminates need for hand-designed components like NMS
 
 2. **UNet**:
-   - Convolutional Networks for Biomedical Image Segmentation
+   - Ronneberger, O., Fischer, P., & Brox, T. (2015). U-Net: Convolutional Networks for Biomedical Image Segmentation. MICCAI 2015.
+   - Paper: https://arxiv.org/abs/1505.04597
    - U-shaped architecture with skip connections
 
 3. **Transformer Attention**:
-   - Multi-head attention mechanisms
-   - Positional encoding for spatial awareness
+   - Vaswani, A., et al. (2017). Attention Is All You Need. NeurIPS 2017.
+   - Paper: https://arxiv.org/abs/1706.03762
+   - Multi-head attention mechanisms and positional encoding
 
-4. **Medical Imaging**:
-   - VinBigData Chest X-ray Abnormalities Detection
-   - MRI Brain Tumor Segmentation
+4. **Medical Imaging Datasets**:
+   - VinBigData Chest X-ray Abnormalities Detection: https://www.kaggle.com/c/vinbigdata-chest-xray-abnormalities-detection
+   - BraTS (Brain Tumor Segmentation): http://braintumorsegmentation.org/
