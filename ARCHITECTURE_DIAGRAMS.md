@@ -52,7 +52,7 @@ Input Image (H×W×3)
       ▼
 ┌─────────────────┐
 │  Prediction     │  → Bounding Boxes (x1,y1,x2,y2)
-│    Heads        │  → Class Labels (14 classes)
+│    Heads        │  → Class Labels (11 lung diseases)
 └─────────────────┘  → Confidence Scores (0-1)
 ```
 
@@ -181,8 +181,11 @@ Skip Connection (S)          Decoder Features (Y)
 └──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
                             │
                             ▼
-                     14 Classes:
-                     - class1...class14
+                     11 Lung Diseases:
+                     - Aortic enlargement, Atelectasis,
+                       Cardiomegaly, Consolidation, ILD,
+                       Infiltration, Lung Opacity, Other lesion,
+                       Pleural effusion, Pneumothorax, Pulmonary fibrosis
                      - Confidence scores
                      - Bounding boxes
 ```

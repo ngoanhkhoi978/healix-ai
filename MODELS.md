@@ -43,7 +43,11 @@ Model hỗ trợ phát hiện 11 loại bệnh lý phổi khác nhau (được �
 10. **Pneumothorax** (Tràn khí màng phổi)
 11. **Pulmonary fibrosis** (Xơ phổi)
 
-**Note:** Code có thể định nghĩa 14 classes nhưng dataset thực tế chỉ có 11 bệnh được gán nhãn trong COCO annotations.
+**Note về classes:** 
+- Model architecture hỗ trợ tối đa 14 classes (có fallback DEFAULT_CLASSES trong code)
+- COCO annotations dataset hiện tại chỉ định nghĩa 11 bệnh cụ thể
+- Model được train với 11 bệnh này từ VinBigData Chest X-ray dataset
+- Khi load từ COCO file, model sẽ sử dụng 11 classes thực tế
 
 ### File Weights
 - **Default Path**: `models/xray/model.pth`
