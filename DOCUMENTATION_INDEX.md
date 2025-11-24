@@ -48,7 +48,10 @@ Healix AI sử dụng **2 mô hình AI chính**: **RFDETR** (X-ray detection) v�
 📍 Location: models/xray/xray_model.py
 🎯 Purpose: Phát hiện bệnh lý trên X-quang phổi
 🏗️ Architecture: Detection Transformer (Real-time DETR)
-📊 Output: Bounding boxes + 14 disease classes
+📊 Output: Bounding boxes + 11 lung diseases
+🏥 Diseases: Aortic enlargement, Atelectasis, Cardiomegaly, Consolidation, 
+            ILD, Infiltration, Lung Opacity, Other lesion, Pleural effusion, 
+            Pneumothorax, Pulmonary fibrosis
 ⚡ Speed: Real-time (~fast)
 📦 Weight: models/xray/model.pth
 ```

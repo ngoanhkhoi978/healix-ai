@@ -4,7 +4,7 @@ Healix AI là một hệ thống phân tích hình ảnh y tế sử dụng deep
 
 ## 🎯 Tính Năng Chính
 
-- **Phát hiện bệnh lý trên X-quang phổi**: Sử dụng RFDETR để phát hiện 14 loại bất thường
+- **Phát hiện bệnh lý trên X-quang phổi**: Sử dụng RFDETR để phát hiện 11 loại bệnh phổi
 - **Phân đoạn ảnh MRI**: Sử dụng TransformerUNet để phân đoạn các vùng bệnh lý
 - **RESTful API**: FastAPI endpoints để tích hợp dễ dàng
 - **Real-time Processing**: Xử lý và trả kết quả nhanh chóng
@@ -18,7 +18,7 @@ Healix AI sử dụng hai mô hình deep learning tiên tiến:
 - **Kiến trúc**: Real-time Detection Transformer
 - **Chức năng**: Phát hiện bệnh lý trên ảnh X-quang phổi
 - **Output**: Bounding boxes với class labels và confidence scores
-- **Classes**: 14 loại bệnh lý khác nhau
+- **Classes**: 11 loại bệnh phổi (Aortic enlargement, Atelectasis, Cardiomegaly, Consolidation, ILD, Infiltration, Lung Opacity, Other lesion, Pleural effusion, Pneumothorax, Pulmonary fibrosis)
 
 ### 2. MRI Segmentation (TransformerUNet)
 - **Kiến trúc**: UNet với Transformer Attention
@@ -214,7 +214,7 @@ export MODEL_MRI_WEIGHTS="https://example.com/mri_weights.pth"
 
 ### X-ray Model
 - **Speed**: Real-time inference
-- **Classes**: 14 bệnh lý
+- **Classes**: 11 bệnh phổi
 - **Input**: Variable size (tự động resize)
 
 ### MRI Model

@@ -23,19 +23,27 @@ Mô hình phát hiện đối tượng dựa trên DETR (Detection Transformer) 
 
 ### Tính Năng
 - Phát hiện real-time các bệnh lý trên ảnh X-quang phổi
-- Hỗ trợ 14 lớp bệnh (class1 - class14)
+- Hỗ trợ 11 lớp bệnh phổi thường gặp
 - Confidence threshold có thể điều chỉnh (mặc định: 0.3)
 - Visualization với bounding boxes và labels có màu sắc
 
 ### Classes Detected
-Model hỗ trợ phát hiện 14 loại bệnh lý khác nhau (được định nghĩa trong `coco_annotations_val.json`):
-```python
-DEFAULT_CLASSES = [
-    "class1", "class2", "class3", "class4", "class5", "class6",
-    "class7", "class8", "class9", "class10", "class11", "class12",
-    "class13", "class14"
-]
-```
+Model hỗ trợ phát hiện 11 loại bệnh lý phổi khác nhau (được định nghĩa trong `coco_annotations_val.json`):
+
+**Danh sách bệnh được phát hiện:**
+1. **Aortic enlargement** (Phình động mạch chủ)
+2. **Atelectasis** (Xẹp phổi)
+3. **Cardiomegaly** (Tim to)
+4. **Consolidation** (Đông đặc phổi)
+5. **ILD** (Interstitial Lung Disease - Bệnh phổi kẽ)
+6. **Infiltration** (Thâm nhiễm)
+7. **Lung Opacity** (Mờ đục phổi)
+8. **Other lesion** (Tổn thương khác)
+9. **Pleural effusion** (Tràn dịch màng phổi)
+10. **Pneumothorax** (Tràn khí màng phổi)
+11. **Pulmonary fibrosis** (Xơ phổi)
+
+**Note:** Code có thể định nghĩa 14 classes nhưng dataset thực tế chỉ có 11 bệnh được gán nhãn trong COCO annotations.
 
 ### File Weights
 - **Default Path**: `models/xray/model.pth`

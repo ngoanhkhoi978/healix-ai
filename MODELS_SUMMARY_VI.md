@@ -9,7 +9,8 @@ Healix AI sử dụng **2 mô hình AI chính**:
 - **Loại model**: Object Detection (Phát hiện đối tượng)
 - **Kiến trúc**: Detection Transformer (DETR)
 - **Thư viện**: rfdetr package
-- **Output**: Bounding boxes + labels cho 14 loại bệnh
+- **Output**: Bounding boxes + labels cho 11 loại bệnh phổi
+- **Bệnh phát hiện**: Aortic enlargement, Atelectasis, Cardiomegaly, Consolidation, ILD, Infiltration, Lung Opacity, Other lesion, Pleural effusion, Pneumothorax, Pulmonary fibrosis
 - **File weights**: `models/xray/model.pth`
 
 ### 2. **TransformerUNet** - Cho MRI  
@@ -36,14 +37,14 @@ RFDETR Medium (Detection Transformer)
   ↓
 Output: 
   - Bounding boxes (xyxy format)
-  - Class IDs (14 classes)
+  - Class IDs (11 diseases)
   - Confidence scores
 ```
 
 **Tính năng nổi bật**:
 - Real-time detection
 - End-to-end learning (không cần NMS)
-- Hỗ trợ 14 loại bệnh lý phổi
+- Phát hiện 11 loại bệnh phổi thường gặp
 
 ### MRI Model (TransformerUNet)
 ```
@@ -77,7 +78,7 @@ Output: Binary Mask (1 channel)
 | **Output** | Boxes + Labels | Segmentation Mask |
 | **Speed** | Fast (real-time) | Medium |
 | **Attention** | Built-in DETR | Multi-head (custom) |
-| **Classes** | 14 classes | Binary (0/1) |
+| **Classes** | 11 lung diseases | Binary (0/1) |
 
 ## Framework và Dependencies
 
