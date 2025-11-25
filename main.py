@@ -1,13 +1,16 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 import io
 from PIL import Image
 import os
+import numpy as np
 from contextlib import asynccontextmanager
+from typing import List
 
 from models.xray.xray_model import DetectorModel
-from models.mri.mri_model import SegmentorModel
+from models.mri.v1.mri_model import SegmentorModel
+from models.mri.v2.mri_model_v2 import SegmentorModelV2
 
 
 
@@ -25,7 +28,8 @@ app.add_middleware(
 
 # Model weights locations can be provided via env vars
 MODEL_XRAY_WEIGHTS = os.environ.get("MODEL_XRAY_WEIGHTS", "models/xray/model.pth")
-MODEL_MRI_WEIGHTS = os.environ.get("MODEL_MRI_WEIGHTS", "models/mri/model.pth")
+MODEL_MRI_WEIGHTS = os.environ.get("MODEL_MRI_WEIGHTS", "models/mri/v1/model.pth")
+MODEL_MRI_V2_WEIGHTS = os.environ.get("MODEL_MRI_V2_WEIGHTS", "models/mri/v2/model.pth")
 
 
 @asynccontextmanager
@@ -44,6 +48,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         app.state.models['mri'] = None
         errors['mri'] = str(e)
+
+    try:
+        app.state.models['mri_v2'] = SegmentorModelV2(weights=MODEL_MRI_V2_WEIGHTS)
+    except Exception as e:
+        app.state.models['mri_v2'] = None
+        errors['mri_v2'] = str(e)
 
     app.state.errors = errors
     yield
@@ -242,6 +252,7 @@ async def mri_debug(file: UploadFile = File(...), threshold: float = 0.5):
     buf.seek(0)
     overlay_b64 = base64.b64encode(buf.read()).decode('utf-8')
 
+
     # mask base64 (convert to PNG)
     try:
         mask_img = Image.fromarray((pred_mask * 255).astype('uint8'))
@@ -259,4 +270,172 @@ async def mri_debug(file: UploadFile = File(...), threshold: float = 0.5):
         "overlay_base64": overlay_b64,
         "mask_base64": mask_b64,
         "errors": errors
+    })
+
+
+# ==================== MRI V2 ENDPOINTS ====================
+
+@app.post("/mri/v2/predict")
+async def mri_v2_predict(
+    t2w: UploadFile = File(...),
+    t2f: UploadFile = File(...),
+    t1n: UploadFile = File(...),
+    t1c: UploadFile = File(...),
+    threshold: float = 0.5
+):
+    """Accept 4 MRI modality files (.gz format) and return full segmentation results exactly like original API."""
+    import base64
+
+    if not hasattr(app.state, "models") or app.state.models.get('mri_v2') is None:
+        raise HTTPException(status_code=503, detail="MRI v2 model not loaded")
+
+    try:
+        print("📥 Receiving files...")
+
+        # Read all 4 files
+        t2w_bytes = await t2w.read()
+        t2f_bytes = await t2f.read()
+        t1n_bytes = await t1n.read()
+        t1c_bytes = await t1c.read()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read files: {e}")
+
+    try:
+        # Process all slices
+        results = app.state.models['mri_v2'].segment_from_files_all_slices(
+            t2w_bytes, t2f_bytes, t1n_bytes, t1c_bytes,
+            threshold=threshold
+        )
+
+        # Convert numpy arrays to base64
+        def array_to_base64(array, normalize=True):
+            """Convert numpy array to base64 PNG"""
+            if normalize and array.max() > array.min():
+                array = (array - array.min()) / (array.max() - array.min())
+
+            img = Image.fromarray((array * 255).astype(np.uint8), mode='L')
+            buffered = io.BytesIO()
+            img.save(buffered, format="PNG")
+            img_str = base64.b64encode(buffered.getvalue()).decode()
+            return f"data:image/png;base64,{img_str}"
+
+        # Convert all numpy arrays to base64
+        formatted_results = []
+        for slice_result in results:
+            formatted_slice = {
+                "slice_index": slice_result["slice_index"],
+                "images": {
+                    "t2w": array_to_base64(slice_result["images"]["t2w"]),
+                    "t2f": array_to_base64(slice_result["images"]["t2f"]),
+                    "t1n": array_to_base64(slice_result["images"]["t1n"]),
+                    "t1c": array_to_base64(slice_result["images"]["t1c"])
+                },
+                "predicted_mask": array_to_base64(slice_result["predicted_mask"], normalize=False),
+                "statistics": slice_result["statistics"]
+            }
+            formatted_results.append(formatted_slice)
+
+        response = {
+            "total_slices": len(formatted_results),
+            "threshold": threshold,
+            "slices": formatted_results
+        }
+
+        return JSONResponse(content=response)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Model inference failed: {e}")
+
+
+@app.post("/mri/v2/predict_with_json")
+async def mri_v2_inference_with_json(file: UploadFile = File(...), threshold: float = 0.5):
+    """Return annotated MRI v2 overlay and mask metadata as JSON (base64 image + mask shape)."""
+    import base64
+
+    if not hasattr(app.state, "models") or app.state.models.get('mri_v2') is None:
+        raise HTTPException(status_code=503, detail="MRI v2 model not loaded")
+
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Uploaded file must be an image")
+
+    contents = await file.read()
+    try:
+        pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read image: {e}")
+
+    try:
+        pred_mask, overlayed = app.state.models['mri_v2'].segment_image(pil_image, threshold=threshold)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Model inference failed: {e}")
+
+    buf = io.BytesIO()
+    overlayed.save(buf, format="PNG")
+    buf.seek(0)
+    b64 = base64.b64encode(buf.read()).decode("utf-8")
+
+    # prepare minimal mask metadata
+    try:
+        mask_shape = list(pred_mask.shape)
+        mask_sum = int(pred_mask.sum())
+    except Exception:
+        mask_shape = None
+        mask_sum = None
+
+    return JSONResponse(content={
+        "image_base64": b64,
+        "mask_shape": mask_shape,
+        "mask_pixel_count": mask_sum,
+    })
+
+
+@app.post("/mri/v2/debug")
+async def mri_v2_debug(file: UploadFile = File(...), threshold: float = 0.5):
+    """Return overlay image and raw mask (both base64) for MRI v2 plus startup model load errors."""
+    import base64
+
+    if not hasattr(app.state, "models") or app.state.models.get('mri_v2') is None:
+        raise HTTPException(status_code=503, detail="MRI v2 model not loaded")
+
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Uploaded file must be an image")
+
+    contents = await file.read()
+    try:
+        pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read image: {e}")
+
+    try:
+        pred_mask, overlayed = app.state.models['mri_v2'].segment_image(pil_image, threshold=threshold)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Model inference failed: {e}")
+
+    # overlay base64
+    buf = io.BytesIO()
+    overlayed.save(buf, format="PNG")
+    buf.seek(0)
+    overlay_b64 = base64.b64encode(buf.read()).decode('utf-8')
+
+    # mask base64 (convert to PNG)
+    try:
+        mask_img = Image.fromarray((pred_mask * 255).astype('uint8'))
+    except Exception:
+        # fallback if pred_mask is not numpy array
+        mask_img = Image.fromarray((np.array(pred_mask) * 255).astype('uint8'))
+    buf2 = io.BytesIO()
+    mask_img.save(buf2, format="PNG")
+    buf2.seek(0)
+    mask_b64 = base64.b64encode(buf2.read()).decode('utf-8')
+
+    errors = getattr(app.state, 'errors', {})
+
+    return JSONResponse(content={
+        "overlay_base64": overlay_b64,
+        "mask_base64": mask_b64,
+        "errors": errors,
+        "model_version": "v2"
     })

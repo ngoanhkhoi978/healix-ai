@@ -10,7 +10,7 @@ import supervision as sv
 from PIL import Image
 
 DEFAULT_WEIGHT = "models/xray/model.pth"
-DEFAULT_COCO = "coco_annotations_val.json"
+DEFAULT_COCO = "models/xray/coco_annotations_val.json"
 
 DEFAULT_CLASSES = [
     "class1", "class2", "class3", "class4", "class5", "class6",

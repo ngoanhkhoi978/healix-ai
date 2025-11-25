@@ -102,7 +102,7 @@ class SegmentorModel:
         else:
             p = Path(weights)
             if not p.exists():
-                alt = Path("..") / p
+                alt = Path("../..") / p
                 if alt.exists():
                     p = alt
                 else:
